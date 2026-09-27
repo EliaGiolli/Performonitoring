@@ -9,6 +9,9 @@ export default mergeConfig(
       environment: 'jsdom',
       include: ['src/**/*.test.{ts,tsx}'],
       setupFiles: ['./src/core/test/setup.ts'],
+      // Each jsdom worker takes a few hundred MB; one per CPU core ran out of memory on a
+      // busy 16-thread machine. Two workers keep the suite fast and reliable.
+      maxWorkers: 2,
     },
   }),
 );
