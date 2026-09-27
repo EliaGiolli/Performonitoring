@@ -38,6 +38,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
     ...reactHooks.configs.flat['recommended-latest'],
   },
+  { files: ['frontend/public/**/*.js'], languageOptions: { globals: globals.browser, sourceType: 'script' } },
   { files: ['frontend/src/**/*.tsx'], ...reactRefresh.configs.vite },
   { files: ['frontend/src/**/*.tsx'], ...jsxA11y.configs.strict },
   {
