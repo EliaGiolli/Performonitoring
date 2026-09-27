@@ -144,6 +144,11 @@
   * {
     @apply border-border;
   }
+  /* Keeps anchor targets and focused elements clear of the sticky header
+     (e.g. the skip link jumping to #main), so focus is never hidden under it. */
+  html {
+    scroll-padding-top: 5rem;
+  }
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
