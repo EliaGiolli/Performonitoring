@@ -6,7 +6,7 @@ Live PC performance charts and one-click fix scripts, all running locally on you
   <img src="https://skillicons.dev/icons?i=ts,nodejs,express,prisma,sqlite,react,vite,powershell,git,github" alt="tech stack" />
 </p>
 
-> **Status:** work in progress. The backend is being reworked first; the frontend starts once the backend is fully tested. Items marked *(planned)* don't exist yet.
+> **Status:** work in progress. The backend is done; the frontend is being built phase by phase. Items marked *(planned)* don't exist yet.
 
 ## What it does
 
@@ -29,7 +29,7 @@ npm workspaces monorepo, TypeScript strict everywhere, feature-based design in e
 pc-monitor/
 ├── shared/     zod schemas + types shared by backend and frontend
 ├── backend/    Express 5 + Prisma/SQLite + Socket.IO
-└── frontend/   React + Vite dashboard (planned)
+└── frontend/   React + Vite dashboard (shell in place; feature panels planned)
 ```
 
 Dependency direction: `app -> features -> core -> shared`. A feature only talks to another feature through its `index.ts`.
@@ -71,9 +71,9 @@ npm install
 Copy `backend/.env.example` to `backend/.env` and set the values, then from `backend/` run `npx prisma generate` and `npx prisma migrate deploy` (creates the SQLite database). Default alert thresholds are seeded when the server starts; samples and logs older than `RETENTION_DAYS` (default 7) are pruned at startup.
 
 ```bash
-npm run dev                  # from the repo root: starts the backend
-npm test                     # builds shared, then runs the shared and backend tests
-npm run lint                 # ESLint (typescript-eslint) on backend/ and shared/
+npm run dev                  # from the repo root: shared (watch), backend and frontend on http://localhost:5173
+npm test                     # builds shared, then runs every workspace's tests
+npm run lint                 # ESLint (typescript-eslint, React hooks, jsx-a11y) on every workspace
 npm run typecheck            # tsc --noEmit in every workspace
 npm run live -w backend      # prints the live Socket.IO stream of a running backend
 ``` See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for package details.
