@@ -21,14 +21,16 @@ README policy: there are three READMEs, `README.md` (fullstack, can be detailed:
 
 Backend gate: the backend is "done" only when tests pass, it runs locally with live WebSocket ticks, and every endpoint works from Swagger UI. Then stop and ask the user before starting the frontend.
 
-## Commands (target; confirm they exist before relying on them)
-- `npm install` at the root installs all workspaces
-- `npm run dev` runs backend and frontend together; Vite proxies `/api` and `/ws` to the backend (`127.0.0.1:4317`)
-- `npm test` (Vitest); single test: `npx vitest run <file> -t "<name>"` from `backend/`, `frontend/` or `shared/`
-- `npx tsc --noEmit` (or `npm run typecheck` at the root) for type checks; `npm run lint` at the root (ESLint flat config in `eslint.config.js`, type-aware `no-floating-promises` on sources)
+## Commands
+- `npm install` at the root installs all workspaces (`shared`, `backend`, `frontend`)
+- `npm run dev` at the root runs shared (tsc watch), backend (`node --watch --import tsx`; `tsx watch` hangs on Windows under concurrently's piped stdin) and frontend (Vite on `http://localhost:5173`, must match the backend `FRONTEND_ORIGIN`) with `concurrently`; Vite proxies `/api` and `/ws` to `127.0.0.1:4317`
+- `npm test` (Vitest); single test: `npx vitest run <file> -t "<name>"` from `backend/`, `frontend/` or `shared/`. Frontend tests run in jsdom, capped at 2 workers (memory)
+- `npm run typecheck` at the root (`tsc --noEmit` per workspace; the frontend checks `tsconfig.app.json` and `tsconfig.node.json`); `npm run lint` at the root (ESLint flat config in `eslint.config.js`: type-aware promise rules on sources, React hooks/refresh and strict `jsx-a11y-x` on `frontend/src`)
+- `npm run build -w frontend` type-checks and builds to `frontend/dist`
 - `npm run live -w backend` prints the live Socket.IO stream of a running backend
 - Prisma (from `backend/`): `npx prisma generate`, `npx prisma migrate dev`; the generated client (`src/generated/prisma`) and `*.db` are gitignored
 - Swagger UI at `http://127.0.0.1:4317/api/docs`, raw spec at `/api/openapi.json`
+- shadcn: the CLI (`npx shadcn add <x>` in `frontend/`) now imports and installs the `cn` package; rewrite imports to `@/core/lib/utils` and don't keep `cn` (or write small components by hand)
 
 ## Architecture
 Local, single-user Windows app: live PC performance charts plus buttons that run fix scripts. TypeScript strict everywhere. Prisma + SQLite for storage.

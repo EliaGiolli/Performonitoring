@@ -6,7 +6,7 @@ Live PC performance charts and one-click fix scripts, all running locally on you
   <img src="https://skillicons.dev/icons?i=ts,nodejs,express,prisma,sqlite,react,vite,powershell,git,github" alt="tech stack" />
 </p>
 
-> **Status:** work in progress. The backend is being reworked first; the frontend starts once the backend is fully tested. Items marked *(planned)* don't exist yet.
+> **Status:** work in progress. The backend is done; the frontend is being built phase by phase. Items marked *(planned)* don't exist yet.
 
 ## What it does
 
@@ -29,7 +29,7 @@ npm workspaces monorepo, TypeScript strict everywhere, feature-based design in e
 pc-monitor/
 ├── shared/     zod schemas + types shared by backend and frontend
 ├── backend/    Express 5 + Prisma/SQLite + Socket.IO
-└── frontend/   React + Vite dashboard (planned)
+└── frontend/   React + Vite dashboard (shell in place; feature panels planned)
 ```
 
 Dependency direction: `app -> features -> core -> shared`. A feature only talks to another feature through its `index.ts`.
