@@ -2,6 +2,11 @@
 
 Live PC performance charts and one-click fix scripts, all running locally on your Windows machine.
 
+> [!NOTE]
+> There is no hosted demo: the app reads and fixes the PC it runs on, so it only makes sense
+> on your own machine. Clone the repo and follow [Getting started](#getting-started) to see
+> your stats live. The screenshots below are from a real run.
+
 <p>
   <img src="https://skillicons.dev/icons?i=ts,nodejs,express,prisma,sqlite,react,vite,powershell,git,github" alt="tech stack" />
 </p>
