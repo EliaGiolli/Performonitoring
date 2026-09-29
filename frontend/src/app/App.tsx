@@ -1,10 +1,12 @@
 import { FixActionsPanel } from '@/features/actions';
-import { LogsPanel } from '@/features/logs';
+import { LogsPanel, useAlertToasts } from '@/features/logs';
 import { MetricsPanel } from '@/features/metrics';
 import { ProcessTable } from '@/features/processes';
 import { AppShell } from './layout/AppShell';
 
 export function App() {
+  useAlertToasts();
+
   return (
     <AppShell>
       <div className="grid gap-8">
