@@ -1,2 +1,3 @@
 // Public API of the metrics feature: other modules import only from this file.
-export {};
+export { useLiveStats, useLiveStatsFeed } from './hooks/useLiveStats';
+export type { MetricPoint } from './buffer';
