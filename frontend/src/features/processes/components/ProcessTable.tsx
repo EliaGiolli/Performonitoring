@@ -8,12 +8,15 @@ import {
   useTable,
   type SortingState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, OctagonX } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/core/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/core/components/ui/toggle-group';
 import { formatBytes } from '@/core/lib/format';
+import { ConfirmDialog } from '@/features/actions';
 import { processesQuery } from '../api';
+import { useKillProcess } from '../hooks/useKillProcess';
 
 const features = tableFeatures({ rowSortingFeature, sortedRowModel: createSortedRowModel() });
 const column = createColumnHelper<typeof features, ProcessInfo>();
@@ -31,6 +34,7 @@ const columns = column.columns([
   // Numbers read best biggest first, so their first click sorts descending.
   column.accessor('cpuPercent', { header: SORT_LABELS.cpuPercent, sortDescFirst: true }),
   column.accessor('memBytes', { header: SORT_LABELS.memBytes, sortDescFirst: true }),
+  column.display({ id: 'actions', header: 'Actions' }),
 ]);
 
 // One decimal, like Task Manager: most processes sit well under 1%.
@@ -50,6 +54,17 @@ const ariaSort = (dir: false | 'asc' | 'desc') =>
 export function ProcessTable() {
   const [sorting, setSorting] = useState<SortingState>(INITIAL_SORT);
   const { data, error, isPending } = useQuery(processesQuery(serverSort(sorting)));
+  const kill = useKillProcess();
+  // Kept after the dialog closes, so its text doesn't change while it animates out.
+  const [target, setTarget] = useState<ProcessInfo | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const askToKill = (p: ProcessInfo) => {
+    setTarget(p);
+    setConfirming(true);
+  };
+  const killButton = (p: ProcessInfo) => (
+    <KillButton process={p} killing={kill.isPending && kill.variables === p.pid} onClick={() => askToKill(p)} />
+  );
 
   const table = useTable({
     features,
@@ -113,16 +128,19 @@ export function ProcessTable() {
                   <p className="truncate font-medium" title={p.name}>
                     {p.name} <span className="font-normal text-muted-foreground">PID {p.pid}</span>
                   </p>
-                  <dl className="mt-1 flex gap-4 text-sm tabular-nums">
-                    <div className="flex gap-1.5">
-                      <dt className="text-muted-foreground">CPU</dt>
-                      <dd>{formatCpu(p.cpuPercent)}</dd>
-                    </div>
-                    <div className="flex gap-1.5">
-                      <dt className="text-muted-foreground">RAM</dt>
-                      <dd>{formatBytes(p.memBytes)}</dd>
-                    </div>
-                  </dl>
+                  <div className="mt-1 flex items-center justify-between gap-4">
+                    <dl className="flex gap-4 text-sm tabular-nums">
+                      <div className="flex gap-1.5">
+                        <dt className="text-muted-foreground">CPU</dt>
+                        <dd>{formatCpu(p.cpuPercent)}</dd>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <dt className="text-muted-foreground">RAM</dt>
+                        <dd>{formatBytes(p.memBytes)}</dd>
+                      </div>
+                    </dl>
+                    {killButton(p)}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -173,6 +191,7 @@ export function ProcessTable() {
                       <td className="px-3 py-2 text-right text-muted-foreground">{p.pid}</td>
                       <td className="px-3 py-2 text-right">{formatCpu(p.cpuPercent)}</td>
                       <td className="px-3 py-2 text-right">{formatBytes(p.memBytes)}</td>
+                      <td className="px-3 py-1 text-right">{killButton(p)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -181,7 +200,32 @@ export function ProcessTable() {
           </>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={`Kill ${target?.name ?? 'process'}?`}
+        description={`Force-stops ${target?.name ?? 'the process'} (PID ${target?.pid ?? '?'}) right away. Unsaved work in that program is lost. Other processes with the same name keep running.`}
+        confirmLabel="Kill process"
+        destructive
+        onConfirm={() => target && kill.mutate(target.pid)}
+      />
     </Card>
+  );
+}
+
+function KillButton({ process: p, killing, onClick }: { process: ProcessInfo; killing: boolean; onClick: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      // Starts with the visible text, so voice control users can say "click Kill".
+      aria-label={`Kill ${p.name}, PID ${p.pid}`}
+      disabled={killing}
+      onClick={onClick}
+    >
+      <OctagonX aria-hidden="true" />
+      {killing ? 'Killing…' : 'Kill'}
+    </Button>
   );
 }
 

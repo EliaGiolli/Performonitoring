@@ -18,7 +18,10 @@ const proc = (pid: number, name: string, cpuPercent: number, memBytes: number): 
 const byCpu = [proc(10, 'chrome.exe', 12.3, 300 * MB), proc(20, 'Code.exe', 4, 900 * MB), proc(30, 'agent.exe', 0.4, 50 * MB)];
 const byMem = [...byCpu].sort((a, b) => b.memBytes - a.memBytes);
 
-const fetchMock = vi.fn((url: string) => {
+const killResult = { actionId: 'kill-process', success: true, message: 'Killed chrome.exe (PID 10)', durationMs: 420, logId: 7 };
+
+const fetchMock = vi.fn((url: string, _init?: RequestInit) => {
+  if (url.endsWith('/kill')) return Promise.resolve(new Response(JSON.stringify(killResult)));
   const processes = url.includes('sortBy=mem') ? byMem : byCpu;
   return Promise.resolve(new Response(JSON.stringify({ total: 180, processes })));
 });
@@ -82,6 +85,47 @@ describe('ProcessTable', () => {
     );
     expect(cards.map((c) => c.textContent?.split(' PID')[0])).toEqual(['agent.exe', 'chrome.exe', 'Code.exe']);
     expect(cards[0]).toHaveTextContent('PID 30');
+  });
+
+  it('kills a process only after confirmation, then refreshes the list', async () => {
+    renderWithProviders(<ProcessTable />);
+    await screen.findByText('3 of 180 running');
+    const listCalls = () => fetchMock.mock.calls.filter(([url]) => url.startsWith('/api/processes?')).length;
+    const before = listCalls();
+
+    fireEvent.click(within(table()).getByRole('button', { name: 'Kill chrome.exe, PID 10' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Kill chrome.exe?' });
+    expect(dialog).toHaveAccessibleDescription(/PID 10/);
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('/kill'), expect.anything());
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Kill process' }));
+
+    await vi.waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/processes/10/kill',
+        expect.objectContaining({ method: 'POST', body: JSON.stringify({ confirm: true }) }),
+      ),
+    );
+    await vi.waitFor(() => expect(listCalls()).toBeGreaterThan(before));
+  });
+
+  it('sends nothing when the kill is cancelled', async () => {
+    renderWithProviders(<ProcessTable />);
+    await screen.findByText('3 of 180 running');
+
+    fireEvent.click(within(table()).getByRole('button', { name: 'Kill Code.exe, PID 20' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('/kill'), expect.anything());
+  });
+
+  it('offers a kill button on each card too', async () => {
+    renderWithProviders(<ProcessTable />);
+    await screen.findByText('3 of 180 running');
+
+    const cards = screen.getByRole('list', { name: /^Processes/ });
+    expect(within(cards).getAllByRole('button', { name: /^Kill / })).toHaveLength(3);
   });
 
   it('says so when the processes cannot be loaded', async () => {
