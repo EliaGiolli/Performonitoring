@@ -1,23 +1,10 @@
-const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
+import { BYTE_UNITS as UNITS, formatBytes } from '@/core/lib/format';
 
-/** 1536 -> "1.5 KB" (binary steps, like Task Manager). */
-export function formatBytes(bytes: number): string {
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < UNITS.length - 1) {
-    value /= 1024;
-    unit++;
-  }
-  const digits = unit === 0 || value >= 100 ? 0 : 1;
-  return `${value.toFixed(digits)} ${UNITS[unit]}`;
-}
+// Shared with other features through core; re-exported so metrics code keeps one import.
+export { formatBytes, formatPercent } from '@/core/lib/format';
 
 export function formatRate(bps: number | null): string {
   return bps === null ? 'N/A' : `${formatBytes(bps)}/s`;
-}
-
-export function formatPercent(value: number | null): string {
-  return value === null ? 'N/A' : `${Math.round(value)}%`;
 }
 
 export function formatTemperature(celsius: number | null): string {
