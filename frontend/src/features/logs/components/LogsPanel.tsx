@@ -1,13 +1,17 @@
 import type { Log } from '@pc-monitor/shared';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useReducer } from 'react';
+import { Archive, ArchiveRestore, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { useReducer, useState } from 'react';
 import { Button } from '@/core/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card';
+import { ConfirmDialog } from '@/features/actions';
+import { setAdminKey } from '../adminKey';
 import { logsQuery } from '../api';
 import { DEFAULT_FILTERS, type LogFilters } from '../filters';
+import { useLogChange, type LogChange } from '../hooks/useLogChange';
 import { formatLogTime, formatRun, SOURCE_LABELS } from '../labels';
+import { AdminKeyDialog } from './AdminKeyDialog';
 import { LevelLabel } from './LevelLabel';
 import { LogFiltersBar } from './LogFiltersBar';
 
@@ -21,6 +25,7 @@ const columns = column.columns([
   column.accessor('source', { header: 'Source' }),
   column.accessor('logMessage', { header: 'Message' }),
   column.display({ id: 'result', header: 'Result' }),
+  column.display({ id: 'actions', header: 'Actions' }),
 ]);
 
 // Keyset paging: `cursors[i]` opens page i + 1 (undefined = first page). Going back pops.
@@ -49,6 +54,26 @@ export function LogsPanel() {
   const rows = table.getRowModel().rows;
   const page = cursors.length;
 
+  // Delete asks first; archive is reversible and runs at once. Either may come back
+  // with a 403, which opens the key prompt and retries the same change after it.
+  const [toDelete, setToDelete] = useState<Log | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [keyPrompt, setKeyPrompt] = useState<{ change: LogChange; rejected: boolean } | null>(null);
+  const change = useLogChange((pending, rejected) => setKeyPrompt({ change: pending, rejected }));
+  const busyId = change.isPending ? change.variables.log.id : null;
+  const rowActions = (log: Log, place: string) => (
+    <LogRowActions
+      log={log}
+      busy={busyId === log.id}
+      describedBy={`log-${log.id}-${place}`}
+      onArchive={() => change.mutate({ kind: 'archive', log, archived: !log.archived })}
+      onDelete={() => {
+        setToDelete(log);
+        setConfirmingDelete(true);
+      }}
+    />
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -74,11 +99,14 @@ export function LogsPanel() {
                     <LevelLabel level={log.logLevel} />
                     <span className="text-muted-foreground">{formatLogTime(log.timestamp)}</span>
                   </div>
-                  <p className="break-words">{log.logMessage}</p>
+                  <p id={`log-${log.id}-card`} className="break-words">
+                    {log.logMessage}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     <SourceText log={log} />
                     {formatRun(log) && ` · ${formatRun(log)}`}
                   </p>
+                  {rowActions(log, 'card')}
                 </li>
               ))}
             </ul>
@@ -109,8 +137,11 @@ export function LogsPanel() {
                       <td className="px-3 py-2 whitespace-nowrap">
                         <SourceText log={log} />
                       </td>
-                      <td className="px-3 py-2 break-words">{log.logMessage}</td>
+                      <td id={`log-${log.id}-row`} className="px-3 py-2 break-words">
+                        {log.logMessage}
+                      </td>
                       <td className="px-3 py-2 whitespace-nowrap tabular-nums">{formatRun(log) ?? '—'}</td>
+                      <td className="px-3 py-1">{rowActions(log, 'row')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -137,7 +168,54 @@ export function LogsPanel() {
           </nav>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this log entry?"
+        description={`“${toDelete?.logMessage ?? ''}” is removed from the audit trail for good. Archive it instead to hide it but keep the record.`}
+        confirmLabel="Delete entry"
+        destructive
+        onConfirm={() => toDelete && change.mutate({ kind: 'delete', log: toDelete })}
+      />
+      <AdminKeyDialog
+        open={keyPrompt !== null}
+        rejected={keyPrompt?.rejected ?? false}
+        onOpenChange={(open) => !open && setKeyPrompt(null)}
+        onSubmit={(key) => {
+          setAdminKey(key);
+          if (keyPrompt) change.mutate(keyPrompt.change);
+          setKeyPrompt(null);
+        }}
+      />
     </Card>
+  );
+}
+
+function LogRowActions({
+  log,
+  busy,
+  describedBy,
+  onArchive,
+  onDelete,
+}: {
+  log: Log;
+  busy: boolean;
+  /** The message, so "Archive" / "Delete" say which entry. */
+  describedBy: string;
+  onArchive: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex gap-2">
+      <Button variant="outline" size="sm" aria-describedby={describedBy} disabled={busy} onClick={onArchive}>
+        {log.archived ? <ArchiveRestore aria-hidden="true" /> : <Archive aria-hidden="true" />}
+        {log.archived ? 'Restore' : 'Archive'}
+      </Button>
+      <Button variant="outline" size="sm" aria-describedby={describedBy} disabled={busy} onClick={onDelete}>
+        <Trash2 aria-hidden="true" />
+        Delete
+      </Button>
+    </div>
   );
 }
 
