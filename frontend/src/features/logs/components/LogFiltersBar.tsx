@@ -83,7 +83,21 @@ export function LogFiltersBar({ filters, onChange }: { filters: LogFilters; onCh
               <span id={`${id}-dates-value`}>{rangeLabel(filters)}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto">
+          <PopoverContent
+            align="start"
+            className="w-auto"
+            // Land on a day (the selected one, else today), not on "previous month":
+            // from there the arrow keys move and Enter picks.
+            onOpenAutoFocus={(event) => {
+              const content = event.currentTarget as HTMLElement;
+              const day =
+                content.querySelector<HTMLButtonElement>('[data-selected] button') ??
+                content.querySelector<HTMLButtonElement>('[data-today] button');
+              if (!day) return;
+              event.preventDefault();
+              day.focus();
+            }}
+          >
             <Calendar
               mode="range"
               selected={filters.from ? ({ from: filters.from, to: filters.to } satisfies DateRange) : undefined}

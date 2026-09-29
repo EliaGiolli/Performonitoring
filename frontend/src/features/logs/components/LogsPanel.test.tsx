@@ -123,6 +123,8 @@ describe('LogsPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Dates Any date' }));
     const grid = screen.getByRole('grid');
+    // Opens on today, ready for the arrow keys, not on the month navigation.
+    await vi.waitFor(() => expect(within(grid).getByText('29').closest('button')).toHaveFocus());
     fireEvent.click(within(grid).getByText('20'));
     fireEvent.click(within(grid).getByText('22'));
 
