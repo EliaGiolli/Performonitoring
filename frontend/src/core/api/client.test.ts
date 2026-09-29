@@ -45,6 +45,15 @@ describe('api', () => {
     expect(init?.headers).toMatchObject({ 'Content-Type': 'application/json' });
   });
 
+  it('adds extra headers, but never lets them replace the JSON content type', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ message: 'done' }));
+
+    await api.delete('/logs/7', messageResponseSchema, { 'x-api-key': 'k', 'Content-Type': 'text/plain' });
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(init?.headers).toMatchObject({ 'x-api-key': 'k', 'Content-Type': 'application/json' });
+  });
+
   it('throws an ApiError with the server message on an error status', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ status: 'error', message: 'Confirmation required' }, { status: 409 }));
 

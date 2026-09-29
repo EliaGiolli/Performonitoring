@@ -20,6 +20,8 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 interface RequestOptions {
   body?: unknown;
   signal?: AbortSignal | undefined;
+  /** Extra headers, e.g. the admin key; they can't replace the JSON content type. */
+  headers?: Record<string, string> | undefined;
 }
 
 // Every request carries a JSON content type: the backend refuses mutating requests
@@ -38,13 +40,13 @@ async function request<S extends z.ZodType>(
   method: Method,
   path: string,
   schema: S,
-  { body, signal }: RequestOptions = {},
+  { body, signal, headers }: RequestOptions = {},
 ): Promise<z.infer<S>> {
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
       method,
-      headers: JSON_HEADERS,
+      headers: { ...headers, ...JSON_HEADERS },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       ...(signal ? { signal } : {}),
     });
@@ -72,7 +74,10 @@ async function request<S extends z.ZodType>(
 export const api = {
   get: <S extends z.ZodType>(path: string, schema: S, signal?: AbortSignal) =>
     request('GET', path, schema, { signal }),
-  post: <S extends z.ZodType>(path: string, body: unknown, schema: S) => request('POST', path, schema, { body }),
-  patch: <S extends z.ZodType>(path: string, body: unknown, schema: S) => request('PATCH', path, schema, { body }),
-  delete: <S extends z.ZodType>(path: string, schema: S) => request('DELETE', path, schema),
+  post: <S extends z.ZodType>(path: string, body: unknown, schema: S, headers?: Record<string, string>) =>
+    request('POST', path, schema, { body, headers }),
+  patch: <S extends z.ZodType>(path: string, body: unknown, schema: S, headers?: Record<string, string>) =>
+    request('PATCH', path, schema, { body, headers }),
+  delete: <S extends z.ZodType>(path: string, schema: S, headers?: Record<string, string>) =>
+    request('DELETE', path, schema, { headers }),
 };

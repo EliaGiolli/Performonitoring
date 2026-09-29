@@ -1,21 +1,8 @@
-import type { ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card';
 import { FixActionsPanel } from '@/features/actions';
+import { LogsPanel } from '@/features/logs';
 import { MetricsPanel } from '@/features/metrics';
 import { ProcessTable } from '@/features/processes';
 import { AppShell } from './layout/AppShell';
-
-// Placeholder panels: each feature replaces its own in the next phases.
-function Panel({ title, children }: { title: string; children?: ReactNode }) {
-  return (
-    <Card className="min-h-40">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">{children ?? 'No data yet.'}</CardContent>
-    </Card>
-  );
-}
 
 export function App() {
   return (
@@ -45,7 +32,7 @@ export function App() {
           <h2 id="logs-heading" className="mb-3 text-base font-semibold">
             Activity log
           </h2>
-          <Panel title="Recent entries" />
+          <LogsPanel />
         </section>
       </div>
     </AppShell>
