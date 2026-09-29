@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendPoint, fromSample, fromSnapshot, mergePoints, WINDOW_MS } from './buffer';
+import { appendPoint, fromSample, fromSnapshot, GAP_MS, mergePoints, WINDOW_MS, withGaps } from './buffer';
 import { at, makeSample, makeSnapshot } from './test/fixtures';
 
 const live = (s: number) => fromSnapshot(makeSnapshot(s));
@@ -47,5 +47,20 @@ describe('mergePoints', () => {
   it('is idempotent for the same history', () => {
     const once = mergePoints([], [stored(0), stored(2)]);
     expect(mergePoints(once, [stored(0), stored(2)])).toEqual(once);
+  });
+});
+
+describe('withGaps', () => {
+  it('leaves a steady stream of readings alone', () => {
+    const points = [live(0), live(2), live(4), live(12)];
+    expect(withGaps(points)).toEqual(points);
+  });
+
+  it('puts a gap marker inside a silence longer than GAP_MS', () => {
+    const [a, b, c] = [live(0), live(2), live(2 + GAP_MS / 1000 + 1)];
+    const out = withGaps([a, b, c]);
+    expect(out).toHaveLength(4);
+    expect(out[2]).toEqual({ t: (b.t + c.t) / 2, gap: true });
+    expect(out[3]).toBe(c);
   });
 });

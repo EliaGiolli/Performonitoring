@@ -88,3 +88,30 @@ export function mergePoints(a: MetricPoint[], b: MetricPoint[]): MetricPoint[] {
   }
   return trim(merged);
 }
+
+/**
+ * A missed stretch of time. Readings come every ~2s; a longer silence means the backend
+ * or the socket was down, so no value is known there.
+ */
+export const GAP_MS = 10_000;
+
+/** Marker drawn between two points that are more than GAP_MS apart. */
+export interface GapPoint {
+  t: number;
+  gap: true;
+}
+
+/**
+ * Inserts a gap marker inside every silence longer than GAP_MS, for the lines only:
+ * the chart draws nothing there instead of a straight line across the missing time,
+ * which would look like measured values.
+ */
+export function withGaps(points: MetricPoint[]): (MetricPoint | GapPoint)[] {
+  const out: (MetricPoint | GapPoint)[] = [];
+  points.forEach((point, i) => {
+    const prev = points[i - 1];
+    if (prev && point.t - prev.t > GAP_MS) out.push({ t: (prev.t + point.t) / 2, gap: true });
+    out.push(point);
+  });
+  return out;
+}
