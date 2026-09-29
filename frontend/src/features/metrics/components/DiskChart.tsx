@@ -4,7 +4,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useId } from 'react';
 import { cn } from '@/core/lib/utils';
 import { thresholdsQuery } from '../api';
-import { formatBytes, formatPercent, formatRate } from '../format';
+import { formatBytes, formatPercent, formatRate, rateTicks } from '../format';
 import { useLiveStats } from '../hooks/useLiveStats';
 import type { Series } from '../series';
 import { MetricCard } from './MetricCard';
@@ -78,7 +78,7 @@ export function DiskChart() {
         { label: 'Write', value: formatRate(current?.diskWriteBps ?? null) },
       ]}
     >
-      <TimeSeriesChart data={points} series={SERIES} formatValue={formatRate} />
+      <TimeSeriesChart data={points} series={SERIES} formatValue={formatRate} yTicks={rateTicks} />
       {drives && drives.length > 0 && <Drives drives={drives} threshold={threshold} />}
     </MetricCard>
   );

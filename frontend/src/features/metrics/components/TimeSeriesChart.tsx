@@ -9,6 +9,8 @@ interface TimeSeriesChartProps {
   formatValue: (value: number) => string;
   /** Fixed domain for percentages; omit to fit the data (rates). */
   yDomain?: [number, number];
+  /** Tick values for the data maximum, when the axis fits the data (see `rateTicks`). */
+  yTicks?: ((max: number) => number[]) | undefined;
   threshold?: Threshold | undefined;
   height?: number;
 }
@@ -68,10 +70,20 @@ function ChartTooltip({
  * listing every series, and an optional dashed threshold line. Missing values
  * (null) leave a gap instead of a fake zero.
  */
-export function TimeSeriesChart({ data, series, formatValue, yDomain, threshold, height = 200 }: TimeSeriesChartProps) {
+export function TimeSeriesChart({
+  data,
+  series,
+  formatValue,
+  yDomain,
+  yTicks,
+  threshold,
+  height = 200,
+}: TimeSeriesChartProps) {
   // Right after startup the window spans seconds, and minute ticks would all read the same.
   const span = (data.at(-1)?.t ?? 0) - (data[0]?.t ?? 0);
   const formatTick = span < SHORT_SPAN_MS ? formatClockSeconds : formatClock;
+  const ticks = yTicks?.(Math.max(0, ...data.flatMap((p) => series.map((s) => s.value(p) ?? 0))));
+  const domain = yDomain ?? (ticks ? [0, ticks.at(-1)!] : [0, 'auto']);
 
   return (
     <div className="grid gap-2">
@@ -90,7 +102,8 @@ export function TimeSeriesChart({ data, series, formatValue, yDomain, threshold,
             minTickGap={48}
           />
           <YAxis
-            domain={yDomain ?? [0, 'auto']}
+            domain={domain}
+            {...(ticks ? { ticks } : {})}
             tickFormatter={formatValue}
             tick={AXIS_TICK}
             stroke="var(--chart-axis)"
