@@ -11,7 +11,7 @@ Live PC performance charts and one-click fix scripts, all running locally on you
 ## What it does
 
 - **Monitor**: CPU (total, per core, temperature), RAM, disk usage and I/O, network throughput and a top-processes list (`GET /api/processes`); pushed live over Socket.IO (`/ws`) every 2 seconds and stored in SQLite, so the charts can be prefilled from `GET /api/metrics/history` and history survives restarts.
-- **Fix**: PowerShell scripts run from the API: flush the DNS cache, clear temp files older than 24h, empty the Recycle Bin, kill a process. Emptying the Recycle Bin and killing a process need `{"confirm": true}`, enforced by the server (409 otherwise). *(planned)* dashboard buttons with a confirm dialog.
+- **Fix**: PowerShell scripts run from the API: flush the DNS cache, clear temp files older than 24h, empty the Recycle Bin, kill a process. Emptying the Recycle Bin and killing a process need `{"confirm": true}`, enforced by the server (409 otherwise). The dashboard has a button per action and a Kill button per process, with a confirm dialog for the destructive ones and a toast with the result.
 - **Log**: every action run (with success and duration) and every threshold alert is written to the log, which can be filtered (level, source, action, archived, date range) and paged; archiving and deleting entries needs the admin key.
 - **Document**: every mounted endpoint is described in Swagger UI (`/api/docs`, spec at `/api/openapi.json`), generated from the same zod schemas used to validate requests; a test fails the build if a route is added without docs.
 
@@ -29,7 +29,7 @@ npm workspaces monorepo, TypeScript strict everywhere, feature-based design in e
 pc-monitor/
 ├── shared/     zod schemas + types shared by backend and frontend
 ├── backend/    Express 5 + Prisma/SQLite + Socket.IO
-└── frontend/   React + Vite dashboard (live metrics charts; processes, actions and logs panels planned)
+└── frontend/   React + Vite dashboard (live metrics charts, process table, fix actions; logs panel planned)
 ```
 
 Dependency direction: `app -> features -> core -> shared`. A feature only talks to another feature through its `index.ts`.
