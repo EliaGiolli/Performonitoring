@@ -17,7 +17,7 @@ const SHORT_SPAN_MS = 10 * 60_000;
 const AXIS_TICK = { fill: 'var(--chart-label)', fontSize: 12 };
 
 /** Legend with line keys (mirrors the marks); only drawn for two or more series. */
-export function SeriesLegend({ series }: { series: Series[] }) {
+function SeriesLegend({ series }: { series: Series[] }) {
   if (series.length < 2) return null;
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-label="Legend">
@@ -74,59 +74,62 @@ export function TimeSeriesChart({ data, series, formatValue, yDomain, threshold,
   const formatTick = span < SHORT_SPAN_MS ? formatClockSeconds : formatClock;
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} accessibilityLayer>
-        <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
-        <XAxis
-          dataKey="t"
-          type="number"
-          scale="time"
-          domain={['dataMin', 'dataMax']}
-          tickFormatter={formatTick}
-          tick={AXIS_TICK}
-          stroke="var(--chart-axis)"
-          minTickGap={48}
-        />
-        <YAxis
-          domain={yDomain ?? [0, 'auto']}
-          tickFormatter={formatValue}
-          tick={AXIS_TICK}
-          stroke="var(--chart-axis)"
-          width={64}
-          allowDecimals={false}
-        />
-        <Tooltip
-          isAnimationActive={false}
-          cursor={{ stroke: 'var(--chart-label)', strokeWidth: 1 }}
-          content={({ active, payload, label }) => (
-            <ChartTooltip active={active} payload={payload} label={label} series={series} formatValue={formatValue} />
-          )}
-        />
-        {threshold && (
-          <ReferenceLine
-            y={threshold.value}
-            stroke="var(--status-critical)"
-            strokeDasharray="4 4"
-            ifOverflow="extendDomain"
-            label={{ value: threshold.label, position: 'insideTopRight', fill: 'var(--muted-foreground)', fontSize: 12 }}
+    <div className="grid gap-2">
+      <SeriesLegend series={series} />
+      <ResponsiveContainer width="100%" height={height}>
+        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} accessibilityLayer>
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+          <XAxis
+            dataKey="t"
+            type="number"
+            scale="time"
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={formatTick}
+            tick={AXIS_TICK}
+            stroke="var(--chart-axis)"
+            minTickGap={48}
           />
-        )}
-        {series.map((s) => (
-          <Line
-            key={s.id}
-            name={s.label}
-            dataKey={s.value}
-            stroke={s.color}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            dot={false}
-            activeDot={{ r: 4, stroke: 'var(--card)', strokeWidth: 2 }}
+          <YAxis
+            domain={yDomain ?? [0, 'auto']}
+            tickFormatter={formatValue}
+            tick={AXIS_TICK}
+            stroke="var(--chart-axis)"
+            width={72}
+            allowDecimals={false}
+          />
+          <Tooltip
             isAnimationActive={false}
-            connectNulls={false}
+            cursor={{ stroke: 'var(--chart-label)', strokeWidth: 1 }}
+            content={({ active, payload, label }) => (
+              <ChartTooltip active={active} payload={payload} label={label} series={series} formatValue={formatValue} />
+            )}
           />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
+          {threshold && (
+            <ReferenceLine
+              y={threshold.value}
+              stroke="var(--status-critical)"
+              strokeDasharray="4 4"
+              ifOverflow="extendDomain"
+              label={{ value: threshold.label, position: 'insideTopRight', fill: 'var(--muted-foreground)', fontSize: 12 }}
+            />
+          )}
+          {series.map((s) => (
+            <Line
+              key={s.id}
+              name={s.label}
+              dataKey={s.value}
+              stroke={s.color}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              dot={false}
+              activeDot={{ r: 4, stroke: 'var(--card)', strokeWidth: 2 }}
+              isAnimationActive={false}
+              connectNulls={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

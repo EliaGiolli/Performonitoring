@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/c
 import { useHistoryPrefill } from '../hooks/useHistoryPrefill';
 import { useLiveStatsFeed } from '../hooks/useLiveStats';
 import { CpuChart } from './CpuChart';
+import { DiskChart } from './DiskChart';
 import { RamChart } from './RamChart';
 
 // Stand-in for the charts that are not built yet.
@@ -25,7 +26,7 @@ export function MetricsPanel() {
     <div className="grid gap-4 md:grid-cols-2">
       <CpuChart />
       <RamChart />
-      <Pending title="Disk" />
+      <DiskChart />
       <Pending title="Network" />
     </div>
   );
