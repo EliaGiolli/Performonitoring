@@ -1,7 +1,14 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axeViolations } from '@/core/test/axe';
+import { renderWithProviders } from '@/core/test/providers';
 import { App } from './App';
+
+const render = renderWithProviders;
+
+// Every query answers with an empty list: the shell must render before any data.
+beforeEach(() => vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('[]')))));
+afterEach(() => vi.unstubAllGlobals());
 
 describe('App', () => {
   it('renders the shell: page heading, live status, theme switch and main landmark', () => {

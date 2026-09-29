@@ -19,3 +19,12 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// jsdom has no ResizeObserver; Recharts' ResponsiveContainer needs one. Charts render
+// at zero size in tests, so component tests assert on text, not on SVG geometry.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver ??= ResizeObserverStub;

@@ -76,7 +76,7 @@ const socket = io('http://127.0.0.1:4317', { path: '/ws', transports: ['websocke
 socket.on('snapshot', (s) => {}); // typed via ServerToClientEvents from @pc-monitor/shared
 ```
 
-REST: `GET /api/metrics/history?minutes=1..360` (chart prefill, oldest first), `POST /api/metrics/record` (one sample now), `GET /api/config`, `PATCH /api/config/:key` (thresholds are 0-100).
+REST: `GET /api/metrics/history?minutes=1..360` (chart prefill, oldest first), `POST /api/metrics/record` (one sample now), `GET /api/config`, `GET /api/config/thresholds` (the thresholds alerts use now), `PATCH /api/config/:key` (thresholds are 0-100).
 
 `features/processes` serves `GET /api/processes?sortBy=cpu|mem&limit=` (top N, System Idle Process excluded).
 

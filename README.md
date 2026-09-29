@@ -29,7 +29,7 @@ npm workspaces monorepo, TypeScript strict everywhere, feature-based design in e
 pc-monitor/
 ├── shared/     zod schemas + types shared by backend and frontend
 ├── backend/    Express 5 + Prisma/SQLite + Socket.IO
-└── frontend/   React + Vite dashboard (shell in place; feature panels planned)
+└── frontend/   React + Vite dashboard (live metrics charts; processes, actions and logs panels planned)
 ```
 
 Dependency direction: `app -> features -> core -> shared`. A feature only talks to another feature through its `index.ts`.

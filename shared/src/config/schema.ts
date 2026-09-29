@@ -32,3 +32,13 @@ export const defaultThresholds: Record<ThresholdKey, number> = {
   RAM_THRESHOLD: 90,
   DISK_THRESHOLD: 90,
 };
+
+// GET /api/config/thresholds: the thresholds alerts use right now. A key is absent when
+// its stored value is unusable, which also means alerts for that metric are off.
+const percentSchema = z.number().min(0).max(100);
+export const thresholdsSchema = z.object({
+  CPU_THRESHOLD: percentSchema.optional(),
+  RAM_THRESHOLD: percentSchema.optional(),
+  DISK_THRESHOLD: percentSchema.optional(),
+});
+export type Thresholds = z.infer<typeof thresholdsSchema>;
