@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card';
+import { FixActionsPanel } from '@/features/actions';
 import { MetricsPanel } from '@/features/metrics';
 import { ProcessTable } from '@/features/processes';
 import { AppShell } from './layout/AppShell';
@@ -37,7 +38,7 @@ export function App() {
             <h2 id="actions-heading" className="mb-3 text-base font-semibold">
               Fix actions
             </h2>
-            <Panel title="Available actions" />
+            <FixActionsPanel />
           </section>
         </div>
         <section aria-labelledby="logs-heading">
