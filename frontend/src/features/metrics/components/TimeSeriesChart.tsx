@@ -3,7 +3,7 @@ import { CircleX, LoaderCircle, PauseCircle, Table2 } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { Toggle } from '@/core/components/ui/toggle';
 import { cn } from '@/core/lib/utils';
-import type { MetricPoint } from '../buffer';
+import { withGaps, type GapPoint, type MetricPoint } from '../buffer';
 import { formatClock, formatClockSeconds } from '../format';
 import { useFeedStatus } from '../hooks/useFeedStatus';
 import { summarize, type Series, type Threshold } from '../series';
@@ -50,8 +50,8 @@ function ChartTooltip({
   payload: readonly { payload?: unknown }[] | undefined;
   label: unknown;
 } & Pick<PlotProps, 'series' | 'formatValue'>) {
-  const point = payload?.[0]?.payload as MetricPoint | undefined;
-  if (!active || !point) return null;
+  const point = payload?.[0]?.payload as MetricPoint | GapPoint | undefined;
+  if (!active || !point || 'gap' in point) return null;
   return (
     <div className="rounded-md border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
       <p className="mb-1 text-muted-foreground">{formatClockSeconds(Number(label))}</p>
@@ -74,7 +74,8 @@ function ChartTooltip({
 /**
  * Line chart over the shared time axis: 2px lines, hairline grid, a crosshair tooltip
  * listing every series, and an optional dashed threshold line. Missing values
- * (null) leave a gap instead of a fake zero.
+ * (null) and missed stretches of time (backend down) leave a gap instead of a fake
+ * zero or a straight line across.
  */
 function Plot({ data, series, formatValue, yDomain, yTicks, threshold, height }: PlotProps) {
   // Right after startup the window spans seconds, and minute ticks would all read the same.
@@ -85,7 +86,7 @@ function Plot({ data, series, formatValue, yDomain, yTicks, threshold, height }:
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} accessibilityLayer>
+      <LineChart data={withGaps(data)} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} accessibilityLayer>
         <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
         <XAxis
           dataKey="t"
@@ -126,7 +127,7 @@ function Plot({ data, series, formatValue, yDomain, yTicks, threshold, height }:
           <Line
             key={s.id}
             name={s.label}
-            dataKey={s.value}
+            dataKey={(p: MetricPoint | GapPoint) => ('gap' in p ? null : s.value(p))}
             stroke={s.color}
             strokeWidth={2}
             strokeLinecap="round"

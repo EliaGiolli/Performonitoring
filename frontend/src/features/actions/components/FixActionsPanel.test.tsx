@@ -64,7 +64,8 @@ describe('FixActionsPanel', () => {
 
   // Tests that start a run wait for its toast, so a late toast never lands in the next test.
   it('runs an action without confirmation right away, without a confirm flag, and toasts the summary', async () => {
-    renderWithProviders(<FixActionsPanel />);
+    const { client } = renderWithProviders(<FixActionsPanel />);
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
     fireEvent.click(await screen.findByRole('button', { name: 'Run Flush DNS cache' }));
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
@@ -76,6 +77,8 @@ describe('FixActionsPanel', () => {
     );
     expect(await screen.findByText('Flush DNS cache: done')).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
+    // The run wrote an audit log entry.
+    await vi.waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['logs'] }));
   });
 
   it('asks before an action that requires confirmation, and sends confirm: true only once confirmed', async () => {

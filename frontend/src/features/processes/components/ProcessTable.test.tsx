@@ -87,8 +87,9 @@ describe('ProcessTable', () => {
     expect(cards[0]).toHaveTextContent('PID 30');
   });
 
-  it('kills a process only after confirmation, then refreshes the list', async () => {
-    renderWithProviders(<ProcessTable />);
+  it('kills a process only after confirmation, then refreshes the list and the log', async () => {
+    const { client } = renderWithProviders(<ProcessTable />);
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
     await screen.findByText('3 of 180 running');
     const listCalls = () => fetchMock.mock.calls.filter(([url]) => url.startsWith('/api/processes?')).length;
     const before = listCalls();
@@ -109,6 +110,7 @@ describe('ProcessTable', () => {
     await vi.waitFor(() => expect(listCalls()).toBeGreaterThan(before));
     expect(await screen.findByText('Kill chrome.exe: done')).toBeInTheDocument();
     expect(screen.getByText('Killed chrome.exe (PID 10)')).toBeInTheDocument();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['logs'] });
   });
 
   it('toasts why a kill was refused', async () => {
