@@ -1,6 +1,6 @@
 # Frontend
 
-Live dashboard for PC metrics, processes, fix actions and logs. The shell (layout, theme, live connection status), the live metrics charts, the process table and the fix actions panel are in place; the logs panel is *(planned)*.
+Live dashboard for PC metrics, processes, fix actions and the activity log.
 
 <p>
   <img src="https://skillicons.dev/icons?i=ts,react,vite,tailwind,vitest" alt="frontend stack" />
@@ -12,8 +12,8 @@ Live dashboard for PC metrics, processes, fix actions and logs. The shell (layou
 - Tailwind CSS v4, shadcn/ui on Radix (`cn()` = clsx + tailwind-merge, variants with cva), lucide icons
 - TanStack Query for server state, Zustand for live state, `socket.io-client` for the `/ws` stream
 - Recharts for the charts, TanStack Table for the process table
-- Radix AlertDialog + vaul Drawer for confirmations, Sonner for toasts
-- Vitest + Testing Library + axe-core; ESLint with React hooks and strict jsx-a11y rules
+- Radix AlertDialog + vaul Drawer for confirmations, Sonner for toasts, react-day-picker (shadcn Calendar) for the log date range
+- Vitest + Testing Library + axe-core; Playwright + @axe-core/playwright for the in-browser scan; ESLint with React hooks and strict jsx-a11y rules
 
 Types and runtime validation come from `@pc-monitor/shared`: every REST response and every Socket.IO event is parsed with the shared zod schemas before it reaches the UI.
 
@@ -23,7 +23,7 @@ Types and runtime validation come from `@pc-monitor/shared`: every REST response
 src/
 ├── app/              App, providers, layout shell (header, connection status)
 ├── core/
-│   ├── api/          typed fetch client (/api) + TanStack Query client
+│   ├── api/          typed fetch client (/api), TanStack Query client, shared query keys
 │   ├── ws/           Socket.IO client, validated subscribe(), connection store
 │   ├── theme/        dark/light/system switch
 │   ├── components/ui shadcn components
@@ -32,7 +32,7 @@ src/
     ├── metrics/      live charts: CPU, memory, disk, network
     ├── processes/    top-processes table + kill
     ├── actions/      fix actions panel, ConfirmDialog, result toasts
-    └── logs/         (planned)
+    └── logs/         activity log, archive/delete with the admin key, alert toasts
                       each: components/, hooks/, api.ts, tests
 ```
 
@@ -52,6 +52,12 @@ The process table polls `GET /api/processes` every 5 seconds (listing processes 
 
 Killing a process and the actions flagged `requiresConfirm` (Empty Recycle Bin) open a confirmation first: a centered alert dialog on desktop, a bottom sheet on mobile, with focus on Cancel. Only confirming sends `{"confirm": true}`; the server refuses the request without it anyway. Every run ends in a toast with the script's one-line result, or the reason it failed or was refused (e.g. a protected PID).
 
+## Activity log
+
+Filters for level, source, active / archived and a day range; pages follow the backend's keyset cursors (Newer / Older), so entries written meanwhile (alerts, runs) never shift a page. The log refreshes after every action run and every `alert` event, and each alert also shows a toast.
+
+Archiving and deleting are admin-only on the server. The key is never built into the page (a key in browser code isn't secret): the first refused change opens a dialog asking for `API_SEGRETO`, keeps it in `sessionStorage` for that tab, and retries. Delete asks for confirmation first; archive can be undone, so it doesn't.
+
 ## Scripts
 
 | Command | What it does |
@@ -60,5 +66,6 @@ Killing a process and the actions flagged `requiresConfirm` (Empty Recycle Bin) 
 | `npm run build` | type check, then production build to `dist/` |
 | `npm test` | Vitest (jsdom) |
 | `npm run typecheck` | `tsc --noEmit` for the app and the Vite config |
+| `npm run a11y` | axe scan (WCAG 2.2 AA) of the running app with Playwright: desktop and phone, dark and light, with dialogs open; never confirms an action. Uses Playwright's Chromium (`npx playwright install chromium`) or, failing that, an installed Chrome |
 
 Run `npm run dev` from the repo root to start shared, backend and frontend together.

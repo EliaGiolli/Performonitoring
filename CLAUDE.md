@@ -28,6 +28,7 @@ Backend gate: the backend is "done" only when tests pass, it runs locally with l
 - `npm run typecheck` at the root (`tsc --noEmit` per workspace; the frontend checks `tsconfig.app.json` and `tsconfig.node.json`); `npm run lint` at the root (ESLint flat config in `eslint.config.js`: type-aware promise rules on sources, React hooks/refresh and strict `jsx-a11y-x` on `frontend/src`)
 - `npm run build -w frontend` type-checks and builds to `frontend/dist`
 - `npm run live -w backend` prints the live Socket.IO stream of a running backend
+- `npm run a11y -w frontend` runs an axe scan of the running app in a real browser (Playwright; desktop + phone, dark + light, dialogs open, never confirms an action)
 - Prisma (from `backend/`): `npx prisma generate`, `npx prisma migrate dev`; the generated client (`src/generated/prisma`) and `*.db` are gitignored
 - Swagger UI at `http://127.0.0.1:4317/api/docs`, raw spec at `/api/openapi.json`
 - shadcn: the CLI (`npx shadcn add <x>` in `frontend/`) now imports and installs the `cn` package; rewrite imports to `@/core/lib/utils` and don't keep `cn` (or write small components by hand)
