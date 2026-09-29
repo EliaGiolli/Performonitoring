@@ -27,6 +27,7 @@ export function RamChart() {
       ]}
     >
       <TimeSeriesChart
+        title="Memory used"
         data={points}
         series={SERIES}
         formatValue={formatPercent}

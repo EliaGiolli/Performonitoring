@@ -78,7 +78,13 @@ export function DiskChart() {
         { label: 'Write', value: formatRate(current?.diskWriteBps ?? null) },
       ]}
     >
-      <TimeSeriesChart data={points} series={SERIES} formatValue={formatRate} yTicks={rateTicks} />
+      <TimeSeriesChart
+        title="Disk throughput"
+        data={points}
+        series={SERIES}
+        formatValue={formatRate}
+        yTicks={rateTicks}
+      />
       {drives && drives.length > 0 && <Drives drives={drives} threshold={threshold} />}
     </MetricCard>
   );

@@ -22,7 +22,13 @@ export function NetworkChart() {
         { label: 'Sent', value: formatRate(current?.netTxBps ?? null) },
       ]}
     >
-      <TimeSeriesChart data={points} series={SERIES} formatValue={formatRate} yTicks={rateTicks} />
+      <TimeSeriesChart
+        title="Network throughput"
+        data={points}
+        series={SERIES}
+        formatValue={formatRate}
+        yTicks={rateTicks}
+      />
     </MetricCard>
   );
 }

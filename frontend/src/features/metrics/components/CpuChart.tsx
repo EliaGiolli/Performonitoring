@@ -55,6 +55,7 @@ export function CpuChart() {
       ]}
     >
       <TimeSeriesChart
+        title="CPU load"
         data={points}
         series={SERIES}
         formatValue={formatPercent}

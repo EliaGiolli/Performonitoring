@@ -3,11 +3,6 @@ import type { Snapshot, SystemSample } from '@pc-monitor/shared';
 /** How much history the charts keep: older points fall off the left edge. */
 export const WINDOW_MS = 60 * 60_000;
 
-// A live tick and the stored sample of the same cycle carry slightly different
-// timestamps (collection vs. insert time), but ticks are ~2s apart, so anything
-// closer than this is the same cycle seen twice.
-const SAME_CYCLE_MS = 1_000;
-
 /**
  * One point on the time axis, shared by every chart. History samples and live
  * snapshots both map onto it; only live points carry per-core values.
@@ -74,16 +69,18 @@ export function appendPoint(points: MetricPoint[], point: MetricPoint): MetricPo
 }
 
 /**
- * Merges two point lists in time order, keeping one point per ticker cycle. When a
- * cycle appears twice, the live point wins (it has per-core values). Used for the
- * history prefill and for the gap refetch after a reconnect.
+ * Merges two point lists in time order, keeping one point per ticker cycle. The backend
+ * stores each sample under its snapshot's timestamp, so the same cycle seen live and
+ * from history has the exact same `t` (cycles can be under a second apart, so nothing
+ * looser is safe). The live point wins: it has per-core values. Used for the history
+ * prefill and for the gap refetch after a reconnect.
  */
 export function mergePoints(a: MetricPoint[], b: MetricPoint[]): MetricPoint[] {
   const all = [...a, ...b].sort((x, y) => x.t - y.t);
   const merged: MetricPoint[] = [];
   for (const point of all) {
     const last = merged.at(-1);
-    if (last && point.t - last.t < SAME_CYCLE_MS) {
+    if (last && point.t === last.t) {
       if (!last.perCore && point.perCore) merged[merged.length - 1] = point;
       continue;
     }

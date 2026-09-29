@@ -34,9 +34,14 @@ describe('mergePoints', () => {
   });
 
   it('keeps one point per cycle and prefers the live one', () => {
-    const merged = mergePoints([live(2)], [stored(0), stored(2.3)]);
+    const merged = mergePoints([live(2)], [stored(0), stored(2)]);
     expect(merged).toHaveLength(2);
     expect(merged[1]).toMatchObject({ t: at(2), perCore: [30, 50] });
+  });
+
+  it('keeps distinct cycles even when they are under a second apart', () => {
+    const merged = mergePoints([live(2)], [stored(0), stored(2.9)]);
+    expect(merged.map((p) => p.t)).toEqual([at(0), at(2), at(2.9)]);
   });
 
   it('is idempotent for the same history', () => {
