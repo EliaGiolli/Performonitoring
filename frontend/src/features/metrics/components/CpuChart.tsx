@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useId } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card';
 import { thresholdsQuery } from '../api';
 import type { MetricPoint } from '../buffer';
 import { formatPercent, formatTemperature } from '../format';
 import { useLiveStats } from '../hooks/useLiveStats';
-import { TimeSeriesChart, type Series } from './TimeSeriesChart';
+import { MetricCard } from './MetricCard';
+import { alertLine, type Series } from '../series';
+import { TimeSeriesChart } from './TimeSeriesChart';
 
 const SERIES: Series[] = [{ id: 'cpu', label: 'Total', color: 'var(--chart-1)', value: (p: MetricPoint) => p.cpu }];
 
@@ -46,30 +47,21 @@ export function CpuChart() {
   const current = points.at(-1)?.cpu ?? null;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <CardTitle>CPU</CardTitle>
-        <dl className="flex gap-4 text-sm">
-          <div className="flex gap-1.5">
-            <dt className="text-muted-foreground">Load</dt>
-            <dd className="font-semibold">{formatPercent(current)}</dd>
-          </div>
-          <div className="flex gap-1.5">
-            <dt className="text-muted-foreground">Temperature</dt>
-            <dd className="font-semibold">{formatTemperature(cpu?.tempC ?? null)}</dd>
-          </div>
-        </dl>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <TimeSeriesChart
-          data={points}
-          series={SERIES}
-          formatValue={formatPercent}
-          yDomain={[0, 100]}
-          threshold={threshold === undefined ? undefined : { value: threshold, label: `Alert ${threshold}%` }}
-        />
-        {cpu && cpu.perCore.length > 0 && <PerCore loads={cpu.perCore} />}
-      </CardContent>
-    </Card>
+    <MetricCard
+      title="CPU"
+      stats={[
+        { label: 'Load', value: formatPercent(current) },
+        { label: 'Temperature', value: formatTemperature(cpu?.tempC ?? null) },
+      ]}
+    >
+      <TimeSeriesChart
+        data={points}
+        series={SERIES}
+        formatValue={formatPercent}
+        yDomain={[0, 100]}
+        threshold={alertLine(threshold)}
+      />
+      {cpu && cpu.perCore.length > 0 && <PerCore loads={cpu.perCore} />}
+    </MetricCard>
   );
 }

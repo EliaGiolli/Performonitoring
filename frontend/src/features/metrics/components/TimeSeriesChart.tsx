@@ -1,19 +1,7 @@
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { MetricPoint } from '../buffer';
+import type { Series, Threshold } from '../series';
 import { formatClock, formatClockSeconds } from '../format';
-
-export interface Series {
-  id: string;
-  label: string;
-  /** A chart slot token, e.g. `var(--chart-1)`: slots are assigned in fixed order. */
-  color: string;
-  value: (p: MetricPoint) => number | null;
-}
-
-export interface Threshold {
-  value: number;
-  label: string;
-}
 
 interface TimeSeriesChartProps {
   data: MetricPoint[];
