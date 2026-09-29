@@ -1,4 +1,4 @@
-import { systemSampleSchema } from '@pc-monitor/shared';
+import { systemSampleSchema, thresholdsSchema } from '@pc-monitor/shared';
 import { queryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 import { api } from '@/core/api';
@@ -12,4 +12,11 @@ export const historyQuery = queryOptions({
   queryFn: ({ signal }) => api.get(`/metrics/history?minutes=${WINDOW_MS / 60_000}`, historySchema, signal),
   // The socket keeps the charts current; history is only refetched on purpose (reconnect).
   staleTime: Infinity,
+});
+
+/** Alert thresholds, drawn as reference lines. Rarely change, so a short stale time is enough. */
+export const thresholdsQuery = queryOptions({
+  queryKey: ['config', 'thresholds'],
+  queryFn: ({ signal }) => api.get('/config/thresholds', thresholdsSchema, signal),
+  staleTime: 60_000,
 });

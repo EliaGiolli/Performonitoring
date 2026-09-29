@@ -1,4 +1,4 @@
-import { appConfigSchema, safeEnvSchema } from '@pc-monitor/shared';
+import { appConfigSchema, safeEnvSchema, thresholdsSchema } from '@pc-monitor/shared';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import app from '../../app.js';
@@ -50,6 +50,18 @@ describe('config API', () => {
     expect(safeEnvSchema.parse(res.body)).toMatchObject({ NODE_ENV: 'test' });
     expect(res.body).not.toHaveProperty('DATABASE_URL');
     expect(res.body).not.toHaveProperty('API_SEGRETO');
+  });
+
+  it('returns the current thresholds, leaving out unusable ones', async () => {
+    await prisma.appConfig.createMany({
+      data: [
+        { key: 'RAM_THRESHOLD', value: '80', type: 'number' },
+        { key: 'DISK_THRESHOLD', value: 'junk', type: 'number' },
+      ],
+    });
+    const res = await request(app).get('/api/config/thresholds');
+    expect(res.status).toBe(200);
+    expect(thresholdsSchema.parse(res.body)).toEqual({ CPU_THRESHOLD: 90, RAM_THRESHOLD: 80 });
   });
 
   it('updates a config value', async () => {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/core/components/ui/card';
+import { MetricsPanel } from '@/features/metrics';
 import { AppShell } from './layout/AppShell';
 
 // Placeholder panels: each feature replaces its own in the next phases.
@@ -22,12 +23,7 @@ export function App() {
           <h2 id="metrics-heading" className="mb-3 text-base font-semibold">
             Live metrics
           </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Panel title="CPU" />
-            <Panel title="Memory" />
-            <Panel title="Disk" />
-            <Panel title="Network" />
-          </div>
+          <MetricsPanel />
         </section>
         <div className="grid gap-8 lg:grid-cols-2">
           <section aria-labelledby="processes-heading">

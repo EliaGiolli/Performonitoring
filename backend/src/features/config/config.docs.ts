@@ -2,6 +2,7 @@ import {
   appConfigSchema,
   configKeyParamsSchema,
   safeEnvSchema,
+  thresholdsSchema,
   updateConfigSchema,
 } from '@pc-monitor/shared';
 import { errorResponses, json, type ApiRegistry } from '../../core/openapi/index.js';
@@ -13,6 +14,18 @@ export function registerConfigDocs(registry: ApiRegistry) {
     tags: ['Config'],
     summary: 'Whitelisted environment variables and dynamic settings',
     responses: { 200: { description: 'Safe environment', content: json(safeEnvSchema) } },
+  });
+  registry.registerPath({
+    method: 'get',
+    path: '/api/config/thresholds',
+    tags: ['Config'],
+    summary: 'Current alert thresholds in percent',
+    description:
+      'The values alerts use on the next cycle. A key is left out when its stored value is not a percentage, which also disables alerts for that metric.',
+    responses: {
+      200: { description: 'Thresholds', content: json(thresholdsSchema) },
+      500: errorResponses[500],
+    },
   });
   registry.registerPath({
     method: 'patch',
