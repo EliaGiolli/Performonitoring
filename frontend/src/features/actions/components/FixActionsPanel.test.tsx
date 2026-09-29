@@ -62,7 +62,8 @@ describe('FixActionsPanel', () => {
     );
   });
 
-  it('runs an action without confirmation right away, without a confirm flag', async () => {
+  // Tests that start a run wait for its toast, so a late toast never lands in the next test.
+  it('runs an action without confirmation right away, without a confirm flag, and toasts the summary', async () => {
     renderWithProviders(<FixActionsPanel />);
     fireEvent.click(await screen.findByRole('button', { name: 'Run Flush DNS cache' }));
 
@@ -73,6 +74,8 @@ describe('FixActionsPanel', () => {
         expect.objectContaining({ method: 'POST', body: '{}' }),
       ),
     );
+    expect(await screen.findByText('Flush DNS cache: done')).toBeInTheDocument();
+    expect(screen.getByText('Done')).toBeInTheDocument();
   });
 
   it('asks before an action that requires confirmation, and sends confirm: true only once confirmed', async () => {
@@ -91,6 +94,7 @@ describe('FixActionsPanel', () => {
         expect.objectContaining({ method: 'POST', body: JSON.stringify({ confirm: true }) }),
       ),
     );
+    expect(await screen.findByText('Empty Recycle Bin: done')).toBeInTheDocument();
   });
 
   it('runs nothing when the confirmation is cancelled', async () => {
@@ -117,6 +121,37 @@ describe('FixActionsPanel', () => {
 
     finish(new Response(JSON.stringify(result('flush-dns'))));
     await vi.waitFor(() => expect(button).toBeEnabled());
+    expect(await screen.findByText('Flush DNS cache: done')).toBeInTheDocument();
+  });
+
+  it('toasts a failure when the script ran but failed', async () => {
+    fetchMock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(ACTIONS))));
+    fetchMock.mockImplementationOnce(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ...result('flush-dns'), success: false, message: 'Access is denied' })),
+      ),
+    );
+    renderWithProviders(<FixActionsPanel />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flush DNS cache' }));
+
+    expect(await screen.findByText('Flush DNS cache: failed')).toBeInTheDocument();
+    expect(screen.getByText('Access is denied')).toBeInTheDocument();
+  });
+
+  it('toasts the reason when the backend refuses the run', async () => {
+    fetchMock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(ACTIONS))));
+    fetchMock.mockImplementationOnce(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ status: 'error', message: 'Flush DNS cache is already running' }), {
+          status: 409,
+        }),
+      ),
+    );
+    renderWithProviders(<FixActionsPanel />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Run Flush DNS cache' }));
+
+    expect(await screen.findByText('Flush DNS cache: failed')).toBeInTheDocument();
+    expect(screen.getByText('Flush DNS cache is already running')).toBeInTheDocument();
   });
 
   it('has no accessibility violations', async () => {

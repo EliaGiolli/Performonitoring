@@ -63,7 +63,7 @@ export function ProcessTable() {
     setConfirming(true);
   };
   const killButton = (p: ProcessInfo) => (
-    <KillButton process={p} killing={kill.isPending && kill.variables === p.pid} onClick={() => askToKill(p)} />
+    <KillButton process={p} killing={kill.isPending && kill.variables.pid === p.pid} onClick={() => askToKill(p)} />
   );
 
   const table = useTable({
@@ -207,7 +207,7 @@ export function ProcessTable() {
         description={`Force-stops ${target?.name ?? 'the process'} (PID ${target?.pid ?? '?'}) right away. Unsaved work in that program is lost. Other processes with the same name keep running.`}
         confirmLabel="Kill process"
         destructive
-        onConfirm={() => target && kill.mutate(target.pid)}
+        onConfirm={() => target && kill.mutate(target)}
       />
     </Card>
   );

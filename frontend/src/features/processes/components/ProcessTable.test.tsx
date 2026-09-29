@@ -107,6 +107,26 @@ describe('ProcessTable', () => {
       ),
     );
     await vi.waitFor(() => expect(listCalls()).toBeGreaterThan(before));
+    expect(await screen.findByText('Kill chrome.exe: done')).toBeInTheDocument();
+    expect(screen.getByText('Killed chrome.exe (PID 10)')).toBeInTheDocument();
+  });
+
+  it('toasts why a kill was refused', async () => {
+    renderWithProviders(<ProcessTable />);
+    await screen.findByText('3 of 180 running');
+    fetchMock.mockImplementationOnce(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ status: 'error', message: 'Refusing to kill protected process 10' }), {
+          status: 403,
+        }),
+      ),
+    );
+
+    fireEvent.click(within(table()).getByRole('button', { name: 'Kill chrome.exe, PID 10' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Kill process' }));
+
+    expect(await screen.findByText('Kill chrome.exe: failed')).toBeInTheDocument();
+    expect(screen.getByText('Refusing to kill protected process 10')).toBeInTheDocument();
   });
 
   it('sends nothing when the kill is cancelled', async () => {
