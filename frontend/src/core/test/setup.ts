@@ -1,9 +1,16 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
+import { toast } from 'sonner';
 import { afterEach, vi } from 'vitest';
 
 // Vitest globals are off, so Testing Library can't register its own cleanup.
 afterEach(cleanup);
+
+// Sonner keeps toasts in module state and replays active ones to a new Toaster, so a
+// toast from one test would show up in the next. Dismissed toasts are not replayed.
+afterEach(() => {
+  toast.dismiss();
+});
 
 // jsdom has no matchMedia; the theme hook needs it. Tests can override `matches`.
 Object.defineProperty(window, 'matchMedia', {
