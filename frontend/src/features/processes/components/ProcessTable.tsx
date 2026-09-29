@@ -162,7 +162,8 @@ export function ProcessTable() {
                             key={header.id}
                             scope="col"
                             aria-sort={ariaSort(dir)}
-                            className={`px-3 py-2 font-medium ${numeric ? 'text-right' : 'text-left'}`}
+                            // Numbers and the button shrink to their content; the name takes the rest.
+                            className={`px-3 py-2 font-medium ${numeric ? 'w-px text-right whitespace-nowrap' : 'text-left'}`}
                           >
                             {col.getCanSort() ? (
                               <button
@@ -182,7 +183,7 @@ export function ProcessTable() {
                     </tr>
                   ))}
                 </thead>
-                <tbody className="tabular-nums">
+                <tbody className="whitespace-nowrap tabular-nums">
                   {rows.map(({ original: p }) => (
                     <tr key={p.pid} className="border-t">
                       <th scope="row" className="max-w-0 truncate px-3 py-2 text-left font-medium" title={p.name}>

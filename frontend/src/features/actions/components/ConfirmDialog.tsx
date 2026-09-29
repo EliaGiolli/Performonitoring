@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/core/components/ui/alert-dialog';
-import { Button } from '@/core/components/ui/button';
+import { Button, buttonVariants } from '@/core/components/ui/button';
 import {
   Drawer,
   DrawerClose,
@@ -36,7 +36,8 @@ export interface ConfirmDialogProps {
 /**
  * Asks before a risky action: a centered alert dialog on desktop, a bottom sheet on
  * small screens. Both start with focus on Cancel, so Enter never confirms by accident,
- * and Escape cancels. The server enforces confirmation too; this is the human half.
+ * and Escape cancels. On close, focus goes back to whatever opened it. The server
+ * enforces confirmation too; this is the human half.
  */
 export function ConfirmDialog({
   open,
@@ -51,20 +52,35 @@ export function ConfirmDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const variant = destructive ? 'destructive' : 'default';
 
+  // The dialog is opened through `open`, not a Radix Trigger, so Radix has nothing to
+  // return focus to and would drop it on <body>. Remember the opener instead. A layout
+  // effect runs before Radix moves focus into the dialog (in a passive effect).
+  const openerRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (open && document.activeElement instanceof HTMLElement) openerRef.current = document.activeElement;
+  }, [open]);
+  const returnFocus = (event: Event) => {
+    const opener = openerRef.current;
+    // A killed process's row is gone by now; then let Radix fall back to its default.
+    if (!opener?.isConnected) return;
+    event.preventDefault();
+    opener.focus();
+  };
+
   if (isDesktop) {
     return (
       <AlertDialog open={open} onOpenChange={onOpenChange}>
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={returnFocus}>
           <AlertDialogHeader>
             <AlertDialogTitle>{title}</AlertDialogTitle>
             <AlertDialogDescription>{description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button variant={variant} onClick={onConfirm}>
-                {confirmLabel}
-              </Button>
+            {/* Not asChild + Button: Slot joins classes without tailwind-merge, so the
+                default bg-primary would beat bg-destructive. cn() here merges them. */}
+            <AlertDialogAction className={buttonVariants({ variant })} onClick={onConfirm}>
+              {confirmLabel}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -81,6 +97,7 @@ export function ConfirmDialog({
           event.preventDefault();
           cancelRef.current?.focus();
         }}
+        onCloseAutoFocus={returnFocus}
       >
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>

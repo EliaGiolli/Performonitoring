@@ -59,6 +59,15 @@ describe.each([
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
+  it('paints a destructive confirm button, not the primary one', () => {
+    render(<Harness onConfirm={vi.fn()} />);
+    open();
+
+    const confirm = screen.getByRole('button', { name: 'Kill process' });
+    expect(confirm).toHaveClass('bg-destructive');
+    expect(confirm).not.toHaveClass('bg-primary');
+  });
+
   it('does nothing on cancel', () => {
     const onConfirm = vi.fn();
     render(<Harness onConfirm={onConfirm} />);
@@ -68,6 +77,17 @@ describe.each([
 
     expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('gives focus back to the button that opened it', async () => {
+    render(<Harness onConfirm={vi.fn()} />);
+    const opener = screen.getByRole('button', { name: 'Kill chrome.exe' });
+    opener.focus();
+    open();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await vi.waitFor(() => expect(opener).toHaveFocus());
   });
 
   it('has no accessibility violations', async () => {
